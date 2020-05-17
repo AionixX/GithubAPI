@@ -2,8 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const HTTP = require("http");
 const Url = require("url");
-const auth_oauth_app_1 = require("@octokit/auth-oauth-app");
-const auth_token_1 = require("@octokit/auth-token");
+const auth_1 = require("@octokit/auth");
+//import { createTokenAuth } from "@octokit/auth-token";
 const request_1 = require("@octokit/request");
 const CLIENT_ID = "47db66f43b3e5e0c0b25";
 const CLIENT_SECRET = "d1abfd3be9efe995399faad6a2f947b2dc4149a9";
@@ -58,19 +58,20 @@ var GithubAPI;
         _state = url.query["state"] ? url.query["state"] : null;
         //TODO if state dont matches the original state, abort the process
         if (_code && _state) {
-            const auth = auth_oauth_app_1.createOAuthAppAuth({
+            const auth = auth_1.createOAuthAppAuth({
                 clientId: CLIENT_ID,
-                clientSecret: CLIENT_SECRET,
-                code: _code
+                clientSecret: CLIENT_SECRET
             });
             const appAuthentication = await auth({
-                type: "oauth-app"
+                type: "token",
+                code: _code,
+                state: _state
             });
             let result = JSON.stringify(appAuthentication);
             let data = JSON.parse(result);
             _response.setHeader("Access-Control-Allow-Origin", "*");
             _response.setHeader("Content-Type", "json");
-            _response.write(data ? data.headers.authorization : "Err:#10001: No data available");
+            _response.write(data ? data.token : "Err:#10001: No data available");
             _response.end();
         }
     }
@@ -83,21 +84,18 @@ var GithubAPI;
         _private = url.query["private"] ? url.query["private"] : null;
         _accessToken = url.query["accessToken"] ? url.query["accessToken"] : null;
         if (_name && _private && _accessToken) {
-            let data = await fetch("http://api.github.com/AionixX/repos?name=HelloWorld", {
-                method: "POST",
-                headers: {
-                    "Authorization": _accessToken
-                }
-            });
-            console.log(data);
-            let auth = auth_token_1.createTokenAuth(_accessToken);
-            let requestWithAuth = request_1.request.defaults({
+            const auth = auth_1.createTokenAuth(_accessToken);
+            await auth();
+            const reqeustWithAuth = request_1.request.defaults({
                 request: {
                     hook: auth.hook
                 }
             });
-            const { data: authorizations } = await requestWithAuth("GET /authorizations");
-            console.log(authorizations);
+            const result = await reqeustWithAuth("POST /user/repos", {
+                name: _name,
+                private: _private == "true" ? true : false
+            });
+            console.log(result);
             // _response.write(result.status);
         }
         _response.setHeader("Access-Control-Allow-Origin", "*");
