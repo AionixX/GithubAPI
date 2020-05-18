@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const HTTP = require("http");
 const Url = require("url");
 const auth_1 = require("@octokit/auth");
-//import { createTokenAuth } from "@octokit/auth-token";
 const request_1 = require("@octokit/request");
 const CLIENT_ID = "47db66f43b3e5e0c0b25";
 const CLIENT_SECRET = "d1abfd3be9efe995399faad6a2f947b2dc4149a9";
@@ -83,6 +82,8 @@ var GithubAPI;
         _name = url.query["name"] ? url.query["name"] : null;
         _private = url.query["private"] ? url.query["private"] : null;
         _accessToken = url.query["accessToken"] ? url.query["accessToken"] : null;
+        _response.setHeader("Access-Control-Allow-Origin", "*");
+        _response.setHeader("Content-Type", "json");
         if (_name && _private && _accessToken) {
             const auth = auth_1.createTokenAuth(_accessToken);
             await auth();
@@ -95,11 +96,8 @@ var GithubAPI;
                 name: _name,
                 private: _private == "true" ? true : false
             });
-            console.log(result);
-            // _response.write(result.status);
+            _response.write(result.status.toString());
         }
-        _response.setHeader("Access-Control-Allow-Origin", "*");
-        _response.setHeader("Content-Type", "json");
         _response.end();
     }
 })(GithubAPI = exports.GithubAPI || (exports.GithubAPI = {}));

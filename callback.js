@@ -28,7 +28,7 @@ var GithubAPI;
         let url = "http://localhost:5001?action=createNewRepository&name=" + name + "&private=" + privateRepo + "&accessToken=" + accesToken;
         let response = await fetch(url);
         let responseText = await response.text();
-        alert(responseText);
+        alert(responseText == "201" ? "Erfolgreich erstellt!" : "Dayum! Da ist leider etwas schief gelaufen.");
     }
 })(GithubAPI || (GithubAPI = {}));
 //# sourceMappingURL=callback.js.map

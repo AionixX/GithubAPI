@@ -1,12 +1,7 @@
 import * as HTTP from "http";
 import * as Url from "url";
 import { createOAuthAppAuth, createTokenAuth } from "@octokit/auth";
-//import { createTokenAuth } from "@octokit/auth-token";
 import { request } from "@octokit/request";
-import { AuthInterface } from "@octokit/types";
-import { Authentication } from "@octokit/auth-app/dist-types/types";
-//import { Octokit } from "@octokit/rest";
-//import { request } from "@octokit/request";
 
 interface AccessTokenData {
   type: string;
@@ -106,9 +101,12 @@ export namespace GithubAPI {
     _private = url.query["private"] ? <string>url.query["private"] : null;
     _accessToken = url.query["accessToken"] ? <string>url.query["accessToken"] : null;
 
+    _response.setHeader("Access-Control-Allow-Origin", "*");
+    _response.setHeader("Content-Type", "json");
+
     if (_name && _private && _accessToken) {
 
-      const auth: AuthInterface<[], Authentication> = createTokenAuth(_accessToken);
+      const auth = createTokenAuth(_accessToken);
       await auth();
       const reqeustWithAuth = request.defaults({
         request: {
@@ -119,11 +117,8 @@ export namespace GithubAPI {
         name: _name,
         private: _private == "true" ? true : false
       });
-      console.log(result);
-      // _response.write(result.status);
+      _response.write(result.status.toString());
     }
-    _response.setHeader("Access-Control-Allow-Origin", "*");
-    _response.setHeader("Content-Type", "json");
     _response.end();
 
   }

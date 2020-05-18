@@ -35,6 +35,6 @@ namespace GithubAPI {
     let url: string = "http://localhost:5001?action=createNewRepository&name=" + name + "&private=" + privateRepo + "&accessToken=" + accesToken;
     let response: Response = await fetch(url);
     let responseText: string = await response.text();
-    alert(responseText);
+    alert(responseText == "201" ? "Erfolgreich erstellt!" : "Dayum! Da ist leider etwas schief gelaufen.");
   }
 }
