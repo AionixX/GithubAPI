@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./Main/index.css">
+  <script src="./Util/util.js"></script>
+  <script src="./Main/index.js"></script>
+  <title>GithubAPI</title>
+</head>
+<body>
+  <header>
+    <h1>GithubAPI</h1>
+    <button id="loginButton">Login with Github</button>
+    <span id="userSpan">No user</span>
+  </header>
+  <main>
+    <div id="content" class="invisible">
+      <div id="repoList">
+      </div>
+      <div id="detailedView">
+      </div>
+      <div id="updateFileDiv">
+        <button id="deleteFile">Delete</button>
+        <button id="saveFile">Save</button>
+        <div>
+          <textarea name="file" id="file" style="width: 40%; height: 50vh;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div id="error" class="visible">
+      <span>You need to be logged in to Github to see your repositorys...</span>
+    </div>
+  </main>
+</body>
+</html>

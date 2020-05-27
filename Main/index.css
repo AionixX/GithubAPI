@@ -1,0 +1,13 @@
+* {
+  margin: 0;
+}
+.visible {
+  display: block;
+}
+
+.invisible {
+  display: none;
+}
+header, #repoList, #detailedView {
+  border: 1px solid black;
+}
