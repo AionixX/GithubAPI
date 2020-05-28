@@ -66,10 +66,78 @@ export namespace GithubAPI {
           case "updateFile":
             await updateFile(_request, _response);
             break;
+          case "deleteFile":
+            await deleteFile(_request, _response);
+            break;
+          case "createFile":
+            await createFile(_request, _response);
+            break;
         }
       }
     }
     _response.end();
+  }
+  async function createFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
+    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+
+    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
+    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
+    let repoPath: string | null = url.query["path"] ? <string>url.query["path"] : null;
+    let fileName: string | null = url.query["fileName"] ? <string>url.query["fileName"] : null;
+
+    if (!at || !repoName || !repoPath || !fileName)
+      return;
+
+    const octokit = new Octokit({
+      auth: at
+    });
+
+    let name: string = (await octokit.users.getAuthenticated()).data.login;
+
+    let res = await octokit.repos.createOrUpdateFile({
+      owner: name,
+      repo: repoName,
+      path: repoPath + "/" + fileName,
+      message: "create file",
+      content: ""
+    });
+
+    _response.write(res.status.toString());
+  }
+  async function deleteFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
+    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+
+    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
+    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
+    let repoPath: string | null = url.query["path"] ? <string>url.query["path"] : null;
+
+    if (!at || !repoName || !repoPath)
+      return;
+
+    const octokit = new Octokit({
+      auth: at
+    });
+
+    let name: string = (await octokit.users.getAuthenticated()).data.login;
+
+    const res = await octokit.repos.getContents({
+      owner: name,
+      repo: repoName,
+      path: repoPath
+    });
+
+    console.log("DELETE /repos/" + name + "/" + repoPath);
+
+    let nres = await octokit.request("DELETE /repos/:owner/:repo/contents/:path", {
+      owner: name,
+      repo: repoName,
+      path: repoPath,
+      sha: res.data.sha,
+      message: "delte"
+
+    });
+
+    _response.write(nres.status.toString());
   }
   async function updateFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);

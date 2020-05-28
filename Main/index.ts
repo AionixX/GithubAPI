@@ -11,13 +11,11 @@ namespace GithubAPI {
   let deleteButton: HTMLButtonElement;
   let activePath: HTMLSpanElement;
   let createNewBG: HTMLDivElement;
-  let newRepoName: HTMLInputElement;
-  let newRepoPrivate: HTMLInputElement;
+  let newFileName: HTMLInputElement;
   let createNewButton: HTMLButtonElement;
-  let closeNewRepo: HTMLButtonElement;
+  let closeNewButton: HTMLButtonElement;
 
   let selectedRepo: HTMLElement | null = null;
-  let selectedElement: HTMLElement | null = null;
   let selectedElementPath: string;
 
   window.addEventListener("load", Init);
@@ -29,9 +27,8 @@ namespace GithubAPI {
     loginButton.addEventListener("click", authorize);                                         //Authorize client on login click
     saveButton.addEventListener("click", saveFile);
     createNewButton.addEventListener("click", createFile);
-    closeNewRepo.addEventListener("click", () => {
-      newRepoName.value = "";
-      newRepoPrivate.value = "false";
+    closeNewButton.addEventListener("click", () => {
+      newFileName.value = "";
       createNewBG.classList.add("invisible");
     });
     deleteButton.addEventListener("click", deleteFile);
@@ -39,7 +36,7 @@ namespace GithubAPI {
     let at: string | undefined = getCookie("at");                                              //Get the accesstoken if available
 
     if (at != undefined) {                                                                    //Check if we have a accesstoken
-      login();                                                                                //If we do -> Login
+      login()                                                                                //If we do -> Login
     }
     else {
 
@@ -60,14 +57,27 @@ namespace GithubAPI {
     }
   }
   async function deleteFile(): Promise<void> {
-    //TODO
+    if (selectedRepo == null || selectedElementPath == null)
+      return;
+
+    let url: string = "http://localhost:5001?a=deleteFile&at=" + getCookie("at") + "&name=" + selectedRepo.innerText + "&path=" + selectedElementPath;
+    let response: Response = await fetch(url);
+
+    console.log(response);
+
   }
-  function createFile(): void {
-    //TOO
+  async function createFile(): Promise<void> {
+    if (selectedRepo == null || selectedElementPath == null || newFileName.value == "")
+      return;
+
+    let url: string = "http://localhost:5001?a=createFile&at=" + getCookie("at") + "&name=" + selectedRepo.innerText + "&path=" + selectedElementPath + "&fileName=" + newFileName.value;
+    let response: Response = await fetch(url);
+
+    console.log(response);
   }
   async function fetchAccesstokenAndLogin(_code: string, _state: string): Promise<void> {
     if (await fetchAccesstoken(_code, _state)) {
-      login();
+      await login();
     }
     else {
       console.error("Error#02: Not able to fetch accesstoken");
@@ -92,7 +102,7 @@ namespace GithubAPI {
     loginButton.removeEventListener("click", authorize);
     loginButton.addEventListener("click", logout);
 
-    fillRepoList();
+    await fillRepoList();
   }
   async function saveFile(): Promise<void> {
     if (!selectedRepo || !selectedElementPath)
@@ -100,7 +110,7 @@ namespace GithubAPI {
 
     let newFile: Blob = new Blob([file.value], { type: "text/plain" });
 
-    let url: string = "http://localhost:5001?a=updateFile&at=" + getCookie("at") + "&name=" + selectedRepo?.innerText + "&path=" + selectedElementPath;
+    let url: string = "http://localhost:5001?a=updateFile&at=" + getCookie("at") + "&name=" + selectedRepo.innerText + "&path=" + selectedElementPath;
     let response: Response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
@@ -155,7 +165,7 @@ namespace GithubAPI {
     return username ? username : "Not able to fetch Username";
   }
   async function fetchAccesstoken(_code: string, _state: string): Promise<boolean> {
-    let url: string = "http://localhost:5001?a=fetchToken&code=" + _code + "&state=" + _state;
+    let url: string = "http://localhost:8080/?a=fetchToken&code=" + _code + "&state=" + _state;
     let response: Response = await fetch(url);
     let auth: string = await response.text();
     if (auth) {
@@ -180,10 +190,9 @@ namespace GithubAPI {
     deleteButton = <HTMLButtonElement>document.querySelector("#deleteFile");
     activePath = <HTMLSpanElement>document.querySelector("#activePath");
     createNewBG = <HTMLDivElement>document.querySelector("#createNewBackground");
-    newRepoName = <HTMLInputElement>document.querySelector("#repoName");
-    newRepoPrivate = <HTMLInputElement>document.querySelector("#private");
+    newFileName = <HTMLInputElement>document.querySelector("#fileName");
     createNewButton = <HTMLButtonElement>document.querySelector("#createButton");
-    closeNewRepo = <HTMLButtonElement>document.querySelector("#closeNewRepo");
+    closeNewButton = <HTMLButtonElement>document.querySelector("#closeNewRepo");
   }
   async function createDetailedElement(_element: TreeElement, _repoName: string, _path: string): Promise<HTMLLIElement> {
     let li: HTMLLIElement = document.createElement("li");
@@ -192,11 +201,12 @@ namespace GithubAPI {
     _path = _path != "" ? _path + "/" + _element.path : _element.path;
 
     li.addEventListener("click", () => {
-      selectedElement = li;
       selectedElementPath = _path;
       activePath.innerText = "Active path: " + _path;
       focusObject(_element, _repoName, _path);
-      event?.stopPropagation();
+      if (event) {
+        event.stopPropagation();
+      }
     });
 
     if (_element.type == "tree") {
@@ -205,7 +215,10 @@ namespace GithubAPI {
 
       let createButton: HTMLButtonElement = document.createElement("button");
       createButton.innerText = "Create";
-      createButton.addEventListener("click", openCreateRepo);
+      createButton.addEventListener("click", () => {
+        openCreateRepo();
+        selectedElementPath = _path;
+      } );
       ul.appendChild(createButton);
 
       for (let element of childs) {
@@ -222,6 +235,7 @@ namespace GithubAPI {
   async function fetchFile(_element: TreeElement, _repoName: string, _path: string): Promise<void> {
     let url: string = "http://localhost:5001?a=getFile&at=" + getCookie("at") + "&name=" + _repoName + "&path=" + _path;
     let response: Response = await fetch(url);
+    file.innerHTML = "";
     file.innerHTML = await (await fetch(await response.text())).text();
   }
   function focusObject(_element: TreeElement, _repoName: string, _path: string): void {

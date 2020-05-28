@@ -12,12 +12,10 @@ var GithubAPI;
     let deleteButton;
     let activePath;
     let createNewBG;
-    let newRepoName;
-    let newRepoPrivate;
+    let newFileName;
     let createNewButton;
-    let closeNewRepo;
+    let closeNewButton;
     let selectedRepo = null;
-    let selectedElement = null;
     let selectedElementPath;
     window.addEventListener("load", Init);
     function Init() {
@@ -25,9 +23,8 @@ var GithubAPI;
         loginButton.addEventListener("click", authorize); //Authorize client on login click
         saveButton.addEventListener("click", saveFile);
         createNewButton.addEventListener("click", createFile);
-        closeNewRepo.addEventListener("click", () => {
-            newRepoName.value = "";
-            newRepoPrivate.value = "false";
+        closeNewButton.addEventListener("click", () => {
+            newFileName.value = "";
             createNewBG.classList.add("invisible");
         });
         deleteButton.addEventListener("click", deleteFile);
@@ -51,14 +48,22 @@ var GithubAPI;
         }
     }
     async function deleteFile() {
-        //TODO
+        if (selectedRepo == null || selectedElementPath == null)
+            return;
+        let url = "http://localhost:5001?a=deleteFile&at=" + GithubAPI.getCookie("at") + "&name=" + selectedRepo.innerText + "&path=" + selectedElementPath;
+        let response = await fetch(url);
+        console.log(response);
     }
-    function createFile() {
-        //TOO
+    async function createFile() {
+        if (selectedRepo == null || selectedElementPath == null || newFileName.value == "")
+            return;
+        let url = "http://localhost:5001?a=createFile&at=" + GithubAPI.getCookie("at") + "&name=" + selectedRepo.innerText + "&path=" + selectedElementPath + "&fileName=" + newFileName.value;
+        let response = await fetch(url);
+        console.log(response);
     }
     async function fetchAccesstokenAndLogin(_code, _state) {
         if (await fetchAccesstoken(_code, _state)) {
-            login();
+            await login();
         }
         else {
             console.error("Error#02: Not able to fetch accesstoken");
@@ -77,13 +82,13 @@ var GithubAPI;
         errorDiv.classList.add("invisible");
         loginButton.removeEventListener("click", authorize);
         loginButton.addEventListener("click", logout);
-        fillRepoList();
+        await fillRepoList();
     }
     async function saveFile() {
         if (!selectedRepo || !selectedElementPath)
             return;
         let newFile = new Blob([file.value], { type: "text/plain" });
-        let url = "http://localhost:5001?a=updateFile&at=" + GithubAPI.getCookie("at") + "&name=" + selectedRepo?.innerText + "&path=" + selectedElementPath;
+        let url = "http://localhost:5001?a=updateFile&at=" + GithubAPI.getCookie("at") + "&name=" + selectedRepo.innerText + "&path=" + selectedElementPath;
         let response = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
@@ -135,7 +140,7 @@ var GithubAPI;
         return username ? username : "Not able to fetch Username";
     }
     async function fetchAccesstoken(_code, _state) {
-        let url = "http://localhost:5001?a=fetchToken&code=" + _code + "&state=" + _state;
+        let url = "http://localhost:8080/?a=fetchToken&code=" + _code + "&state=" + _state;
         let response = await fetch(url);
         let auth = await response.text();
         if (auth) {
@@ -160,28 +165,31 @@ var GithubAPI;
         deleteButton = document.querySelector("#deleteFile");
         activePath = document.querySelector("#activePath");
         createNewBG = document.querySelector("#createNewBackground");
-        newRepoName = document.querySelector("#repoName");
-        newRepoPrivate = document.querySelector("#private");
+        newFileName = document.querySelector("#fileName");
         createNewButton = document.querySelector("#createButton");
-        closeNewRepo = document.querySelector("#closeNewRepo");
+        closeNewButton = document.querySelector("#closeNewRepo");
     }
     async function createDetailedElement(_element, _repoName, _path) {
         let li = document.createElement("li");
         li.innerText = _element.path;
         _path = _path != "" ? _path + "/" + _element.path : _element.path;
         li.addEventListener("click", () => {
-            selectedElement = li;
             selectedElementPath = _path;
             activePath.innerText = "Active path: " + _path;
             focusObject(_element, _repoName, _path);
-            event?.stopPropagation();
+            if (event) {
+                event.stopPropagation();
+            }
         });
         if (_element.type == "tree") {
             let ul = document.createElement("ul");
             let childs = await fetchTree(_repoName, _element.sha);
             let createButton = document.createElement("button");
             createButton.innerText = "Create";
-            createButton.addEventListener("click", openCreateRepo);
+            createButton.addEventListener("click", () => {
+                openCreateRepo();
+                selectedElementPath = _path;
+            });
             ul.appendChild(createButton);
             for (let element of childs) {
                 let lie = await createDetailedElement(element, _repoName, _path);
@@ -197,6 +205,7 @@ var GithubAPI;
     async function fetchFile(_element, _repoName, _path) {
         let url = "http://localhost:5001?a=getFile&at=" + GithubAPI.getCookie("at") + "&name=" + _repoName + "&path=" + _path;
         let response = await fetch(url);
+        file.innerHTML = "";
         file.innerHTML = await (await fetch(await response.text())).text();
     }
     function focusObject(_element, _repoName, _path) {
