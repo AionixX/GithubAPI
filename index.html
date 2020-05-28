@@ -12,7 +12,8 @@
   <header>
     <h1>GithubAPI</h1>
     <button id="loginButton">Login with Github</button>
-    <span id="userSpan">No user</span>
+    <span id="userSpan">No user</span></header></br>
+    <span id="activePath"></span>
   </header>
   <main>
     <div id="content" class="invisible">
@@ -26,6 +27,15 @@
         <div>
           <textarea name="file" id="file" style="width: 40%; height: 50vh;"></textarea>
         </div>
+      </div>
+    </div>
+    <div id="createNewBackground" class="invisible">
+      <div id="createNew">
+        <input type="text" id="repoName" name="repoName" placeholder="Repository name"></br>
+        <input type="checkbox" id="private" name="private">
+        <label for="private">Private?</label>
+        <button id="createButton">Create</button>
+        <button id="closeNewRepo">Close</button>
       </div>
     </div>
     <div id="error" class="visible">

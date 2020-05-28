@@ -9,6 +9,13 @@ var GithubAPI;
     let errorDiv;
     let file;
     let saveButton;
+    let deleteButton;
+    let activePath;
+    let createNewBG;
+    let newRepoName;
+    let newRepoPrivate;
+    let createNewButton;
+    let closeNewRepo;
     let selectedRepo = null;
     let selectedElement = null;
     let selectedElementPath;
@@ -17,6 +24,13 @@ var GithubAPI;
         getReferences(); //First get all references
         loginButton.addEventListener("click", authorize); //Authorize client on login click
         saveButton.addEventListener("click", saveFile);
+        createNewButton.addEventListener("click", createFile);
+        closeNewRepo.addEventListener("click", () => {
+            newRepoName.value = "";
+            newRepoPrivate.value = "false";
+            createNewBG.classList.add("invisible");
+        });
+        deleteButton.addEventListener("click", deleteFile);
         let at = GithubAPI.getCookie("at"); //Get the accesstoken if available
         if (at != undefined) { //Check if we have a accesstoken
             login(); //If we do -> Login
@@ -35,6 +49,12 @@ var GithubAPI;
                 }
             }
         }
+    }
+    async function deleteFile() {
+        //TODO
+    }
+    function createFile() {
+        //TOO
     }
     async function fetchAccesstokenAndLogin(_code, _state) {
         if (await fetchAccesstoken(_code, _state)) {
@@ -137,6 +157,13 @@ var GithubAPI;
         errorDiv = document.querySelector("#error");
         file = document.querySelector("#file");
         saveButton = document.querySelector("#saveFile");
+        deleteButton = document.querySelector("#deleteFile");
+        activePath = document.querySelector("#activePath");
+        createNewBG = document.querySelector("#createNewBackground");
+        newRepoName = document.querySelector("#repoName");
+        newRepoPrivate = document.querySelector("#private");
+        createNewButton = document.querySelector("#createButton");
+        closeNewRepo = document.querySelector("#closeNewRepo");
     }
     async function createDetailedElement(_element, _repoName, _path) {
         let li = document.createElement("li");
@@ -145,13 +172,16 @@ var GithubAPI;
         li.addEventListener("click", () => {
             selectedElement = li;
             selectedElementPath = _path;
+            activePath.innerText = "Active path: " + _path;
             focusObject(_element, _repoName, _path);
+            event?.stopPropagation();
         });
         if (_element.type == "tree") {
             let ul = document.createElement("ul");
             let childs = await fetchTree(_repoName, _element.sha);
             let createButton = document.createElement("button");
             createButton.innerText = "Create";
+            createButton.addEventListener("click", openCreateRepo);
             ul.appendChild(createButton);
             for (let element of childs) {
                 let lie = await createDetailedElement(element, _repoName, _path);
@@ -160,6 +190,9 @@ var GithubAPI;
             li.appendChild(ul);
         }
         return li;
+    }
+    function openCreateRepo() {
+        createNewBG.classList.remove("invisible");
     }
     async function fetchFile(_element, _repoName, _path) {
         let url = "http://localhost:5001?a=getFile&at=" + GithubAPI.getCookie("at") + "&name=" + _repoName + "&path=" + _path;
@@ -170,6 +203,10 @@ var GithubAPI;
         switch (_element.type) {
             case "blob":
                 fetchFile(_element, _repoName, _path);
+                break;
+            case "tree":
+                selectedElementPath = _path;
+                activePath.innerText = "Active path: " + _path;
                 break;
         }
     }

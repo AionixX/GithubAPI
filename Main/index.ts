@@ -8,6 +8,13 @@ namespace GithubAPI {
   let errorDiv: HTMLDivElement;
   let file: HTMLTextAreaElement;
   let saveButton: HTMLButtonElement;
+  let deleteButton: HTMLButtonElement;
+  let activePath: HTMLSpanElement;
+  let createNewBG: HTMLDivElement;
+  let newRepoName: HTMLInputElement;
+  let newRepoPrivate: HTMLInputElement;
+  let createNewButton: HTMLButtonElement;
+  let closeNewRepo: HTMLButtonElement;
 
   let selectedRepo: HTMLElement | null = null;
   let selectedElement: HTMLElement | null = null;
@@ -21,6 +28,13 @@ namespace GithubAPI {
 
     loginButton.addEventListener("click", authorize);                                         //Authorize client on login click
     saveButton.addEventListener("click", saveFile);
+    createNewButton.addEventListener("click", createFile);
+    closeNewRepo.addEventListener("click", () => {
+      newRepoName.value = "";
+      newRepoPrivate.value = "false";
+      createNewBG.classList.add("invisible");
+    });
+    deleteButton.addEventListener("click", deleteFile);
 
     let at: string | undefined = getCookie("at");                                              //Get the accesstoken if available
 
@@ -44,6 +58,12 @@ namespace GithubAPI {
         }
       }
     }
+  }
+  async function deleteFile(): Promise<void> {
+    //TODO
+  }
+  function createFile(): void {
+    //TOO
   }
   async function fetchAccesstokenAndLogin(_code: string, _state: string): Promise<void> {
     if (await fetchAccesstoken(_code, _state)) {
@@ -157,6 +177,13 @@ namespace GithubAPI {
     errorDiv = <HTMLDivElement>document.querySelector("#error");
     file = <HTMLTextAreaElement>document.querySelector("#file");
     saveButton = <HTMLButtonElement>document.querySelector("#saveFile");
+    deleteButton = <HTMLButtonElement>document.querySelector("#deleteFile");
+    activePath = <HTMLSpanElement>document.querySelector("#activePath");
+    createNewBG = <HTMLDivElement>document.querySelector("#createNewBackground");
+    newRepoName = <HTMLInputElement>document.querySelector("#repoName");
+    newRepoPrivate = <HTMLInputElement>document.querySelector("#private");
+    createNewButton = <HTMLButtonElement>document.querySelector("#createButton");
+    closeNewRepo = <HTMLButtonElement>document.querySelector("#closeNewRepo");
   }
   async function createDetailedElement(_element: TreeElement, _repoName: string, _path: string): Promise<HTMLLIElement> {
     let li: HTMLLIElement = document.createElement("li");
@@ -167,7 +194,9 @@ namespace GithubAPI {
     li.addEventListener("click", () => {
       selectedElement = li;
       selectedElementPath = _path;
+      activePath.innerText = "Active path: " + _path;
       focusObject(_element, _repoName, _path);
+      event?.stopPropagation();
     });
 
     if (_element.type == "tree") {
@@ -176,6 +205,7 @@ namespace GithubAPI {
 
       let createButton: HTMLButtonElement = document.createElement("button");
       createButton.innerText = "Create";
+      createButton.addEventListener("click", openCreateRepo);
       ul.appendChild(createButton);
 
       for (let element of childs) {
@@ -185,6 +215,9 @@ namespace GithubAPI {
       li.appendChild(ul);
     }
     return li;
+  }
+  function openCreateRepo(): void {
+    createNewBG.classList.remove("invisible");
   }
   async function fetchFile(_element: TreeElement, _repoName: string, _path: string): Promise<void> {
     let url: string = "http://localhost:5001?a=getFile&at=" + getCookie("at") + "&name=" + _repoName + "&path=" + _path;
@@ -196,6 +229,11 @@ namespace GithubAPI {
       case "blob":
         fetchFile(_element, _repoName, _path);
         break;
+      case "tree":
+        selectedElementPath = _path;
+        activePath.innerText = "Active path: " + _path;
+        break;
+
     }
   }
   function createRepoListElement(_repo: Repo): HTMLLIElement {
