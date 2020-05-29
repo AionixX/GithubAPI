@@ -4,6 +4,9 @@ namespace GithubAPI {
     id: number;
     name: string;
     full_name: string;
+    owner: {
+      login: string;
+    };
   }
 
   export interface Tree {

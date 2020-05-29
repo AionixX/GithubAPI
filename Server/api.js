@@ -174,12 +174,13 @@ var GithubAPI;
         let at = url.query["at"] ? url.query["at"] : null;
         let repoName = url.query["name"] ? url.query["name"] : null;
         let path = url.query["path"] ? url.query["path"] : null;
-        if (!at || !repoName || !path)
+        let name = url.query["owner"] ? url.query["owner"] : null;
+        if (!at || !repoName || !path || !name)
             return;
         const octokit = new rest_1.Octokit({
             auth: at
         });
-        let name = (await octokit.users.getAuthenticated()).data.login;
+        //let name: string = (await octokit.users.getAuthenticated()).data.login;
         const res = await octokit.repos.getContents({
             owner: name,
             repo: repoName,
@@ -203,11 +204,12 @@ var GithubAPI;
         let repoName = url.query["name"] ? url.query["name"] : null;
         let sha = url.query["sha"] ? url.query["sha"] : null;
         let at = url.query["at"] ? url.query["at"] : null;
-        if (sha && at && repoName) {
+        let name = url.query["owner"] ? url.query["owner"] : null;
+        if (sha && at && repoName && name) {
             const octokit = new rest_1.Octokit({
                 auth: at
             });
-            let name = (await octokit.users.getAuthenticated()).data.login;
+            //let name: string = (await octokit.users.getAuthenticated()).data.login;
             let getTree = await octokit.git.getTree({
                 owner: name,
                 repo: repoName,
@@ -218,13 +220,14 @@ var GithubAPI;
     }
     async function getRepoTree(_request, _response) {
         let url = Url.parse(_request.url, true);
+        let name = url.query["owner"] ? url.query["owner"] : null;
         let repoName = url.query["name"] ? url.query["name"] : null;
         let at = url.query["at"] ? url.query["at"] : null;
-        if (repoName && at) {
+        if (repoName && at && name) {
             const octokit = new rest_1.Octokit({
                 auth: at
             });
-            let name = (await octokit.users.getAuthenticated()).data.login;
+            //let name: string = (await octokit.users.getAuthenticated()).data.login;
             let ref = await octokit.git.getRef({
                 owner: name,
                 repo: repoName,

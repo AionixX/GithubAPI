@@ -119,11 +119,11 @@ namespace GithubAPI {
     console.log(await response.text());
   }
   async function showRepo(_repo: Repo, _element: HTMLElement): Promise<void> {
-    let repoTree: TreeElement[] = await fetchRepoTree(_repo.name);
+    let repoTree: TreeElement[] = await fetchRepoTree(_repo.name, _repo.owner.login);
     selectedRepo = _element;
     clearList(detailedView);
     for (let element of repoTree) {
-      detailedView.appendChild(await createDetailedElement(element, _repo.name, ""));
+      detailedView.appendChild(await createDetailedElement(element, _repo.name, "", _repo.owner.login));
     }
   }
   async function fillRepoList(): Promise<void> {
@@ -133,15 +133,15 @@ namespace GithubAPI {
       repoList.appendChild(createRepoListElement(element));
     });
   }
-  async function fetchRepoTree(_name: string): Promise<TreeElement[]> {
-    let url: string = "http://localhost:5001?a=getRepoTree&at=" + getCookie("at") + "&name=" + _name;
+  async function fetchRepoTree(_name: string, _owner: string): Promise<TreeElement[]> {
+    let url: string = "http://localhost:5001?a=getRepoTree&at=" + getCookie("at") + "&name=" + _name + "&owner=" + _owner;
     let response: Response = await fetch(url);
     let tree: TreeElement[] = JSON.parse(await response.text());
 
     return tree;
   }
-  async function fetchTree(_name: string, _sha: string): Promise<TreeElement[]> {
-    let url: string = "http://localhost:5001?a=getTree&at=" + getCookie("at") + "&name=" + _name + "&sha=" + _sha;
+  async function fetchTree(_name: string, _sha: string, _owner: string): Promise<TreeElement[]> {
+    let url: string = "http://localhost:5001?a=getTree&at=" + getCookie("at") + "&name=" + _name + "&sha=" + _sha + "&owner=" + _owner;
     let response: Response = await fetch(url);
     let tree: TreeElement[] = JSON.parse(await response.text());
 
@@ -194,7 +194,7 @@ namespace GithubAPI {
     createNewButton = <HTMLButtonElement>document.querySelector("#createButton");
     closeNewButton = <HTMLButtonElement>document.querySelector("#closeNewRepo");
   }
-  async function createDetailedElement(_element: TreeElement, _repoName: string, _path: string): Promise<HTMLLIElement> {
+  async function createDetailedElement(_element: TreeElement, _repoName: string, _path: string, _owner: string): Promise<HTMLLIElement> {
     let li: HTMLLIElement = document.createElement("li");
     li.innerText = _element.path;
 
@@ -203,7 +203,7 @@ namespace GithubAPI {
     li.addEventListener("click", () => {
       selectedElementPath = _path;
       activePath.innerText = "Active path: " + _path;
-      focusObject(_element, _repoName, _path);
+      focusObject(_element, _repoName, _path, _owner);
       if (event) {
         event.stopPropagation();
       }
@@ -211,7 +211,7 @@ namespace GithubAPI {
 
     if (_element.type == "tree") {
       let ul: HTMLUListElement = document.createElement("ul");
-      let childs: TreeElement[] = await fetchTree(_repoName, _element.sha);
+      let childs: TreeElement[] = await fetchTree(_repoName, _element.sha, _owner);
 
       let createButton: HTMLButtonElement = document.createElement("button");
       createButton.innerText = "Create";
@@ -222,7 +222,7 @@ namespace GithubAPI {
       ul.appendChild(createButton);
 
       for (let element of childs) {
-        let lie: HTMLLIElement = await createDetailedElement(element, _repoName, _path);
+        let lie: HTMLLIElement = await createDetailedElement(element, _repoName, _path, _owner);
         ul.appendChild(lie);
       }
       li.appendChild(ul);
@@ -232,16 +232,16 @@ namespace GithubAPI {
   function openCreateRepo(): void {
     createNewBG.classList.remove("invisible");
   }
-  async function fetchFile(_element: TreeElement, _repoName: string, _path: string): Promise<void> {
-    let url: string = "http://localhost:5001?a=getFile&at=" + getCookie("at") + "&name=" + _repoName + "&path=" + _path;
+  async function fetchFile(_element: TreeElement, _repoName: string, _path: string, _owner: string): Promise<void> {
+    let url: string = "http://localhost:5001?a=getFile&at=" + getCookie("at") + "&name=" + _repoName + "&path=" + _path + "&owner= " + _owner;
     let response: Response = await fetch(url);
     file.innerHTML = "";
     file.innerHTML = await (await fetch(await response.text())).text();
   }
-  function focusObject(_element: TreeElement, _repoName: string, _path: string): void {
+  function focusObject(_element: TreeElement, _repoName: string, _path: string, _owner: string): void {
     switch (_element.type) {
       case "blob":
-        fetchFile(_element, _repoName, _path);
+        fetchFile(_element, _repoName, _path, _owner);
         break;
       case "tree":
         selectedElementPath = _path;

@@ -214,15 +214,16 @@ export namespace GithubAPI {
     let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
     let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
     let path: string | null = url.query["path"] ? <string>url.query["path"] : null;
+    let name: string | null = url.query["owner"] ? <string>url.query["owner"] : null;
 
-    if (!at || !repoName || !path)
+    if (!at || !repoName || !path || !name)
       return;
 
     const octokit = new Octokit({
       auth: at
     });
 
-    let name: string = (await octokit.users.getAuthenticated()).data.login;
+    //let name: string = (await octokit.users.getAuthenticated()).data.login;
     const res = await octokit.repos.getContents({
       owner: name,
       repo: repoName,
@@ -251,13 +252,14 @@ export namespace GithubAPI {
     let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
     let sha: string | null = url.query["sha"] ? <string>url.query["sha"] : null;
     let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
+    let name: string | null = url.query["owner"] ? <string>url.query["owner"] : null;
 
-    if (sha && at && repoName) {
+    if (sha && at && repoName && name) {
       const octokit = new Octokit({
         auth: at
       });
 
-      let name: string = (await octokit.users.getAuthenticated()).data.login;
+      //let name: string = (await octokit.users.getAuthenticated()).data.login;
 
       let getTree = await octokit.git.getTree({
         owner: name,
@@ -270,15 +272,16 @@ export namespace GithubAPI {
   async function getRepoTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
+    let name: string | null = url.query["owner"] ? <string>url.query["owner"] : null;
     let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
     let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
 
-    if (repoName && at) {
+    if (repoName && at && name) {
       const octokit = new Octokit({
         auth: at
       });
 
-      let name: string = (await octokit.users.getAuthenticated()).data.login;
+      //let name: string = (await octokit.users.getAuthenticated()).data.login;
 
       let ref = await octokit.git.getRef({
         owner: name,

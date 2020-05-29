@@ -97,11 +97,11 @@ var GithubAPI;
         console.log(await response.text());
     }
     async function showRepo(_repo, _element) {
-        let repoTree = await fetchRepoTree(_repo.name);
+        let repoTree = await fetchRepoTree(_repo.name, _repo.owner.login);
         selectedRepo = _element;
         clearList(detailedView);
         for (let element of repoTree) {
-            detailedView.appendChild(await createDetailedElement(element, _repo.name, ""));
+            detailedView.appendChild(await createDetailedElement(element, _repo.name, "", _repo.owner.login));
         }
     }
     async function fillRepoList() {
@@ -111,14 +111,14 @@ var GithubAPI;
             repoList.appendChild(createRepoListElement(element));
         });
     }
-    async function fetchRepoTree(_name) {
-        let url = "http://localhost:5001?a=getRepoTree&at=" + GithubAPI.getCookie("at") + "&name=" + _name;
+    async function fetchRepoTree(_name, _owner) {
+        let url = "http://localhost:5001?a=getRepoTree&at=" + GithubAPI.getCookie("at") + "&name=" + _name + "&owner=" + _owner;
         let response = await fetch(url);
         let tree = JSON.parse(await response.text());
         return tree;
     }
-    async function fetchTree(_name, _sha) {
-        let url = "http://localhost:5001?a=getTree&at=" + GithubAPI.getCookie("at") + "&name=" + _name + "&sha=" + _sha;
+    async function fetchTree(_name, _sha, _owner) {
+        let url = "http://localhost:5001?a=getTree&at=" + GithubAPI.getCookie("at") + "&name=" + _name + "&sha=" + _sha + "&owner=" + _owner;
         let response = await fetch(url);
         let tree = JSON.parse(await response.text());
         return tree;
@@ -169,21 +169,21 @@ var GithubAPI;
         createNewButton = document.querySelector("#createButton");
         closeNewButton = document.querySelector("#closeNewRepo");
     }
-    async function createDetailedElement(_element, _repoName, _path) {
+    async function createDetailedElement(_element, _repoName, _path, _owner) {
         let li = document.createElement("li");
         li.innerText = _element.path;
         _path = _path != "" ? _path + "/" + _element.path : _element.path;
         li.addEventListener("click", () => {
             selectedElementPath = _path;
             activePath.innerText = "Active path: " + _path;
-            focusObject(_element, _repoName, _path);
+            focusObject(_element, _repoName, _path, _owner);
             if (event) {
                 event.stopPropagation();
             }
         });
         if (_element.type == "tree") {
             let ul = document.createElement("ul");
-            let childs = await fetchTree(_repoName, _element.sha);
+            let childs = await fetchTree(_repoName, _element.sha, _owner);
             let createButton = document.createElement("button");
             createButton.innerText = "Create";
             createButton.addEventListener("click", () => {
@@ -192,7 +192,7 @@ var GithubAPI;
             });
             ul.appendChild(createButton);
             for (let element of childs) {
-                let lie = await createDetailedElement(element, _repoName, _path);
+                let lie = await createDetailedElement(element, _repoName, _path, _owner);
                 ul.appendChild(lie);
             }
             li.appendChild(ul);
@@ -202,16 +202,16 @@ var GithubAPI;
     function openCreateRepo() {
         createNewBG.classList.remove("invisible");
     }
-    async function fetchFile(_element, _repoName, _path) {
-        let url = "http://localhost:5001?a=getFile&at=" + GithubAPI.getCookie("at") + "&name=" + _repoName + "&path=" + _path;
+    async function fetchFile(_element, _repoName, _path, _owner) {
+        let url = "http://localhost:5001?a=getFile&at=" + GithubAPI.getCookie("at") + "&name=" + _repoName + "&path=" + _path + "&owner= " + _owner;
         let response = await fetch(url);
         file.innerHTML = "";
         file.innerHTML = await (await fetch(await response.text())).text();
     }
-    function focusObject(_element, _repoName, _path) {
+    function focusObject(_element, _repoName, _path, _owner) {
         switch (_element.type) {
             case "blob":
-                fetchFile(_element, _repoName, _path);
+                fetchFile(_element, _repoName, _path, _owner);
                 break;
             case "tree":
                 selectedElementPath = _path;
