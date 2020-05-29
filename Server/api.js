@@ -265,9 +265,9 @@ var GithubAPI;
                 code: _code,
                 state: _state
             });
-            let result = JSON.stringify(appAuthentication);
-            let data = JSON.parse(result);
-            _response.write(data ? data.token : "Err:#10001: No data available");
+            /*let result: string = JSON.stringify(appAuthentication);
+            let data: AccessTokenData = JSON.parse(result);*/
+            _response.write(appAuthentication ? appAuthentication.token : "Err:#10001: No data available");
         }
         else {
             _response.write("Err:#10002: No token or state provided");

@@ -134,7 +134,6 @@ export namespace GithubAPI {
       path: repoPath,
       sha: res.data.sha,
       message: "delte"
-
     });
 
     _response.write(nres.status.toString());
@@ -327,10 +326,10 @@ export namespace GithubAPI {
         state: _state
       });
 
-      let result: string = JSON.stringify(appAuthentication);
-      let data: AccessTokenData = JSON.parse(result);
+      /*let result: string = JSON.stringify(appAuthentication);
+      let data: AccessTokenData = JSON.parse(result);*/
 
-      _response.write(data ? data.token : "Err:#10001: No data available");
+      _response.write(appAuthentication ? appAuthentication.token : "Err:#10001: No data available");
     }
     else {
       _response.write("Err:#10002: No token or state provided");

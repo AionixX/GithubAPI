@@ -36,7 +36,7 @@ namespace GithubAPI {
     let at: string | undefined = getCookie("at");                                              //Get the accesstoken if available
 
     if (at != undefined) {                                                                    //Check if we have a accesstoken
-      login()                                                                                //If we do -> Login
+      login();                                                                              //If we do -> Login
     }
     else {
 
@@ -155,7 +155,7 @@ namespace GithubAPI {
   }
   function logout(): void {
     deleteCookie("at");
-    window.location.href = "http://localhost:8080/";
+    window.location.href = "http://localhost:5000/";
   }
   async function fetchUsername(): Promise<string> {
     let url: string = "http://localhost:5001?a=fetchUsername&at=" + getCookie("at");
@@ -165,7 +165,7 @@ namespace GithubAPI {
     return username ? username : "Not able to fetch Username";
   }
   async function fetchAccesstoken(_code: string, _state: string): Promise<boolean> {
-    let url: string = "http://localhost:8080/?a=fetchToken&code=" + _code + "&state=" + _state;
+    let url: string = "http://localhost:5001/?a=fetchToken&code=" + _code + "&state=" + _state;
     let response: Response = await fetch(url);
     let auth: string = await response.text();
     if (auth) {

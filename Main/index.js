@@ -131,7 +131,7 @@ var GithubAPI;
     }
     function logout() {
         GithubAPI.deleteCookie("at");
-        window.location.href = "http://localhost:8080/";
+        window.location.href = "http://localhost:5000/";
     }
     async function fetchUsername() {
         let url = "http://localhost:5001?a=fetchUsername&at=" + GithubAPI.getCookie("at");
@@ -140,7 +140,7 @@ var GithubAPI;
         return username ? username : "Not able to fetch Username";
     }
     async function fetchAccesstoken(_code, _state) {
-        let url = "http://localhost:8080/?a=fetchToken&code=" + _code + "&state=" + _state;
+        let url = "http://localhost:5001/?a=fetchToken&code=" + _code + "&state=" + _state;
         let response = await fetch(url);
         let auth = await response.text();
         if (auth) {
