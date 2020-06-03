@@ -31,7 +31,7 @@ export namespace GithubAPI {
       _response.setHeader("Access-Control-Allow-Origin", "*");
       _response.setHeader("Content-Type", "json");
 
-      let url: Url.UrlWithParsedQuery = Url.parse(_request.url, true);
+      let url: Url.UrlWithParsedQuery = Url.parse(_request.url, true);  // try convert to global json-object to use in subsequent functions
       let action: string = <string>url.query["a"];
       if (action) {
         switch (action) {
@@ -70,6 +70,7 @@ export namespace GithubAPI {
     }
     _response.end();
   }
+  
   async function createFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -202,7 +203,7 @@ export namespace GithubAPI {
     });
     _response.write(res.status.toString());
   }
-
+  
   async function getFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -223,7 +224,6 @@ export namespace GithubAPI {
       repo: repoName,
       path: path
     });
-
     _response.write(res.data.download_url);
   }
 

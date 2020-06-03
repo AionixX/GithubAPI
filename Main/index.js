@@ -17,8 +17,8 @@ var GithubAPI;
     let closeNewButton;
     let selectedRepo = null;
     let selectedElementPath;
-    window.addEventListener("load", Init);
-    function Init() {
+    window.addEventListener("load", init);
+    function init() {
         getReferences(); //First get all references
         loginButton.addEventListener("click", authorize); //Authorize client on login click
         saveButton.addEventListener("click", saveFile);
@@ -173,14 +173,15 @@ var GithubAPI;
         let li = document.createElement("li");
         li.innerText = _element.path;
         _path = _path != "" ? _path + "/" + _element.path : _element.path;
-        li.addEventListener("click", () => {
+        li.addEventListener("click", focus);
+        function focus() {
             selectedElementPath = _path;
             activePath.innerText = "Active path: " + _path;
             focusObject(_element, _repoName, _path, _owner);
             if (event) {
                 event.stopPropagation();
             }
-        });
+        }
         if (_element.type == "tree") {
             let ul = document.createElement("ul");
             let childs = await fetchTree(_repoName, _element.sha, _owner);

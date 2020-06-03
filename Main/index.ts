@@ -18,9 +18,9 @@ namespace GithubAPI {
   let selectedRepo: HTMLElement | null = null;
   let selectedElementPath: string;
 
-  window.addEventListener("load", Init);
+  window.addEventListener("load", init);
 
-  function Init(): void {
+  function init(): void {
 
     getReferences();                                                                          //First get all references
 
@@ -39,7 +39,6 @@ namespace GithubAPI {
       login();                                                                              //If we do -> Login
     }
     else {
-
       let params: URLSearchParams = (new URL(document.location.href).searchParams);           //Get URL search params
       let code: string | null = params.get("code");
       let state: string | null = params.get("state");
@@ -56,6 +55,7 @@ namespace GithubAPI {
       }
     }
   }
+
   async function deleteFile(): Promise<void> {
     if (selectedRepo == null || selectedElementPath == null)
       return;
@@ -84,6 +84,7 @@ namespace GithubAPI {
       alert("Not able to fetch accesstoken!");
     }
   }
+
   async function login(): Promise<void> {
     let username: string = await fetchUsername();                                           //Get username and put it to the HTML Element
 
@@ -104,6 +105,7 @@ namespace GithubAPI {
 
     await fillRepoList();
   }
+
   async function saveFile(): Promise<void> {
     if (!selectedRepo || !selectedElementPath)
       return;
@@ -126,6 +128,7 @@ namespace GithubAPI {
       detailedView.appendChild(await createDetailedElement(element, _repo.name, "", _repo.owner.login));
     }
   }
+
   async function fillRepoList(): Promise<void> {
     let repos: Repo[] = await getAllRepositorys();
     clearList(repoList);
@@ -133,6 +136,7 @@ namespace GithubAPI {
       repoList.appendChild(createRepoListElement(element));
     });
   }
+
   async function fetchRepoTree(_name: string, _owner: string): Promise<TreeElement[]> {
     let url: string = "http://localhost:5001?a=getRepoTree&at=" + getCookie("at") + "&name=" + _name + "&owner=" + _owner;
     let response: Response = await fetch(url);
@@ -140,6 +144,7 @@ namespace GithubAPI {
 
     return tree;
   }
+
   async function fetchTree(_name: string, _sha: string, _owner: string): Promise<TreeElement[]> {
     let url: string = "http://localhost:5001?a=getTree&at=" + getCookie("at") + "&name=" + _name + "&sha=" + _sha + "&owner=" + _owner;
     let response: Response = await fetch(url);
@@ -147,16 +152,19 @@ namespace GithubAPI {
 
     return tree;
   }
+
   async function getAllRepositorys(): Promise<Repo[]> {
     let url: string = "http://localhost:5001?a=getAllRepos&at=" + getCookie("at");
     let response: Response = await fetch(url);
     const data: Repo[] = JSON.parse(await response.text());
     return data;
   }
+
   function logout(): void {
     deleteCookie("at");
     window.location.href = "http://localhost:5000/";
   }
+
   async function fetchUsername(): Promise<string> {
     let url: string = "http://localhost:5001?a=fetchUsername&at=" + getCookie("at");
     let response: Response = await fetch(url);
@@ -164,6 +172,7 @@ namespace GithubAPI {
 
     return username ? username : "Not able to fetch Username";
   }
+
   async function fetchAccesstoken(_code: string, _state: string): Promise<boolean> {
     let url: string = "http://localhost:5001/?a=fetchToken&code=" + _code + "&state=" + _state;
     let response: Response = await fetch(url);
@@ -174,10 +183,12 @@ namespace GithubAPI {
     }
     return false;
   }
+
   function authorize(): void {
     let state: string = generateAndSaveState(15);
     window.location.href = "http://localhost:5001?a=auth&state=" + state;                      //Tell the server to redirect the client to github
   }
+
   function getReferences(): void {
     loginButton = <HTMLButtonElement>document.querySelector("#loginButton");
     userName = <HTMLSpanElement>document.querySelector("#userSpan");
@@ -194,20 +205,23 @@ namespace GithubAPI {
     createNewButton = <HTMLButtonElement>document.querySelector("#createButton");
     closeNewButton = <HTMLButtonElement>document.querySelector("#closeNewRepo");
   }
+
   async function createDetailedElement(_element: TreeElement, _repoName: string, _path: string, _owner: string): Promise<HTMLLIElement> {
     let li: HTMLLIElement = document.createElement("li");
     li.innerText = _element.path;
 
     _path = _path != "" ? _path + "/" + _element.path : _element.path;
 
-    li.addEventListener("click", () => {
+    li.addEventListener("click", focus);
+
+    function focus(): void {
       selectedElementPath = _path;
       activePath.innerText = "Active path: " + _path;
       focusObject(_element, _repoName, _path, _owner);
       if (event) {
         event.stopPropagation();
       }
-    });
+    }
 
     if (_element.type == "tree") {
       let ul: HTMLUListElement = document.createElement("ul");
@@ -229,15 +243,18 @@ namespace GithubAPI {
     }
     return li;
   }
+
   function openCreateRepo(): void {
     createNewBG.classList.remove("invisible");
   }
+
   async function fetchFile(_element: TreeElement, _repoName: string, _path: string, _owner: string): Promise<void> {
     let url: string = "http://localhost:5001?a=getFile&at=" + getCookie("at") + "&name=" + _repoName + "&path=" + _path + "&owner= " + _owner;
     let response: Response = await fetch(url);
     file.innerHTML = "";
     file.innerHTML = await (await fetch(await response.text())).text();
   }
+
   function focusObject(_element: TreeElement, _repoName: string, _path: string, _owner: string): void {
     switch (_element.type) {
       case "blob":
@@ -250,6 +267,7 @@ namespace GithubAPI {
 
     }
   }
+
   function createRepoListElement(_repo: Repo): HTMLLIElement {
     let li: HTMLLIElement = document.createElement("li");
     li.innerText = _repo.name;
@@ -258,6 +276,7 @@ namespace GithubAPI {
     });
     return li;
   }
+
   function clearList(_list: HTMLElement): void {
     while (_list.firstChild) {
       _list.firstChild.remove();

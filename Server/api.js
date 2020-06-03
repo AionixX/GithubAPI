@@ -19,7 +19,7 @@ var GithubAPI;
         if (_request.url) {
             _response.setHeader("Access-Control-Allow-Origin", "*");
             _response.setHeader("Content-Type", "json");
-            let url = Url.parse(_request.url, true);
+            let url = Url.parse(_request.url, true); // try convert to global json-object to use in subsequent functions
             let action = url.query["a"];
             if (action) {
                 switch (action) {
