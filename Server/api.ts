@@ -25,13 +25,6 @@ export namespace GithubAPI {
   server.listen(port);
   server.addListener("request", handleRequest);
 
-  /*
-  Legend:
-  a                 = action
-  auth              = Send user to Github to authenticate
-  fetchToken        = Exchange a code to get a personal accesstoken
-  */
-
   async function handleRequest(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     if (_request.url) {
 
@@ -104,6 +97,7 @@ export namespace GithubAPI {
 
     _response.write(res.status.toString());
   }
+
   async function deleteFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -138,6 +132,7 @@ export namespace GithubAPI {
 
     _response.write(nres.status.toString());
   }
+
   async function updateFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -207,6 +202,7 @@ export namespace GithubAPI {
     });
     _response.write(res.status.toString());
   }
+
   async function getFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -222,15 +218,15 @@ export namespace GithubAPI {
       auth: at
     });
 
-    //let name: string = (await octokit.users.getAuthenticated()).data.login;
     const res = await octokit.repos.getContents({
       owner: name,
       repo: repoName,
       path: path
     });
-    _response.write(res.data.download_url);
 
+    _response.write(res.data.download_url);
   }
+
   async function getRepoList(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -245,6 +241,7 @@ export namespace GithubAPI {
       _response.write(JSON.stringify(result.data));
     }
   }
+
   async function getTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -258,8 +255,6 @@ export namespace GithubAPI {
         auth: at
       });
 
-      //let name: string = (await octokit.users.getAuthenticated()).data.login;
-
       let getTree = await octokit.git.getTree({
         owner: name,
         repo: repoName,
@@ -268,6 +263,7 @@ export namespace GithubAPI {
       _response.write(JSON.stringify(getTree.data.tree));
     }
   }
+
   async function getRepoTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
     let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
@@ -279,8 +275,6 @@ export namespace GithubAPI {
       const octokit = new Octokit({
         auth: at
       });
-
-      //let name: string = (await octokit.users.getAuthenticated()).data.login;
 
       let ref = await octokit.git.getRef({
         owner: name,
@@ -297,6 +291,7 @@ export namespace GithubAPI {
       _response.write(JSON.stringify(getTree.data.tree));
     }
   }
+
   async function auth(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _CLIENT_ID: string, _SCOPE: string): Promise<void> {
     let urlRequest: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
     let state: string = <string>urlRequest.query["state"];
@@ -326,10 +321,10 @@ export namespace GithubAPI {
         state: _state
       });
 
-      /*let result: string = JSON.stringify(appAuthentication);
-      let data: AccessTokenData = JSON.parse(result);*/
+      let result: string = JSON.stringify(appAuthentication);
+      let data: AccessTokenData = JSON.parse(result);
 
-      _response.write(appAuthentication ? appAuthentication.token : "Err:#10001: No data available");
+      _response.write(data ? data.token : "Err:#10001: No data available");
     }
     else {
       _response.write("Err:#10002: No token or state provided");
