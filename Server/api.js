@@ -15,17 +15,11 @@ var GithubAPI;
         port = 5001;
     server.listen(port);
     server.addListener("request", handleRequest);
-    /*
-    Legend:
-    a                 = action
-    auth              = Send user to Github to authenticate
-    fetchToken        = Exchange a code to get a personal accesstoken
-    */
     async function handleRequest(_request, _response) {
         if (_request.url) {
             _response.setHeader("Access-Control-Allow-Origin", "*");
             _response.setHeader("Content-Type", "json");
-            let url = Url.parse(_request.url, true);
+            let url = Url.parse(_request.url, true); // try convert to global json-object to use in subsequent functions
             let action = url.query["a"];
             if (action) {
                 switch (action) {
@@ -180,7 +174,6 @@ var GithubAPI;
         const octokit = new rest_1.Octokit({
             auth: at
         });
-        //let name: string = (await octokit.users.getAuthenticated()).data.login;
         const res = await octokit.repos.getContents({
             owner: name,
             repo: repoName,
@@ -209,7 +202,6 @@ var GithubAPI;
             const octokit = new rest_1.Octokit({
                 auth: at
             });
-            //let name: string = (await octokit.users.getAuthenticated()).data.login;
             let getTree = await octokit.git.getTree({
                 owner: name,
                 repo: repoName,
@@ -227,7 +219,6 @@ var GithubAPI;
             const octokit = new rest_1.Octokit({
                 auth: at
             });
-            //let name: string = (await octokit.users.getAuthenticated()).data.login;
             let ref = await octokit.git.getRef({
                 owner: name,
                 repo: repoName,
@@ -265,9 +256,9 @@ var GithubAPI;
                 code: _code,
                 state: _state
             });
-            /*let result: string = JSON.stringify(appAuthentication);
-            let data: AccessTokenData = JSON.parse(result);*/
-            _response.write(appAuthentication ? appAuthentication.token : "Err:#10001: No data available");
+            let result = JSON.stringify(appAuthentication);
+            let data = JSON.parse(result);
+            _response.write(data ? data.token : "Err:#10001: No data available");
         }
         else {
             _response.write("Err:#10002: No token or state provided");
