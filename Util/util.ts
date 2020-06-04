@@ -50,7 +50,7 @@ namespace GithubAPI {
   export function deleteCookie(_name: string): void {
     const date: Date = new Date();
     date.setTime(date.getTime() - 1000);
-
+    
     document.cookie = _name + "=" + "; expires=" + date.toUTCString() + "; path=/";  // use string template
   }
   

@@ -10,6 +10,19 @@ export interface AccessTokenData {
   scopes: string[];
 }
 
+export interface Parameters {
+  action: string | null;
+  at: string | null;
+  repoName: string | null;
+  repoPath: string | null;
+  fileName: string | null;
+  path: string | null;
+  name: string | null;
+  sha: string | null;
+  state: string | null;
+  code: string | null;
+}
+
 const CLIENT_ID: string = "47db66f43b3e5e0c0b25";
 const CLIENT_SECRET: string = "d1abfd3be9efe995399faad6a2f947b2dc4149a9";
 const SCOPE: string = "repo, user";
@@ -32,66 +45,79 @@ export namespace GithubAPI {
       _response.setHeader("Content-Type", "json");
 
       let url: Url.UrlWithParsedQuery = Url.parse(_request.url, true);  // try convert to global json-object to use in subsequent functions
-      let action: string = <string>url.query["a"];
-      if (action) {
-        switch (action) {
+      let parameters: Parameters = getParameters(url);
+      console.log(parameters);
+      if (parameters.action) {
+        switch (parameters.action) {
           case "auth":
-            await auth(_request, _response, CLIENT_ID, SCOPE);
+            await auth(_request, _response, CLIENT_ID, SCOPE, parameters);
             break;
           case "fetchToken":
-            await fetchToken(_request, _response);
+            await fetchToken(_request, _response, parameters);
             break;
           case "fetchUsername":
-            await fetchUsername(_request, _response);
+            await fetchUsername(_request, _response, parameters);
             break;
           case "getAllRepos":
-            await getRepoList(_request, _response);
+            await getRepoList(_request, _response, parameters);
             break;
           case "getRepoTree":
-            await getRepoTree(_request, _response);
+            await getRepoTree(_request, _response, parameters);
             break;
           case "getTree":
-            await getTree(_request, _response);
+            await getTree(_request, _response, parameters);
             break;
           case "getFile":
-            await getFile(_request, _response);
+            await getFile(_request, _response, parameters);
             break;
           case "updateFile":
-            await updateFile(_request, _response);
+            await updateFile(_request, _response, parameters);
             break;
           case "deleteFile":
-            await deleteFile(_request, _response);
+            await deleteFile(_request, _response, parameters);
             break;
           case "createFile":
-            await createFile(_request, _response);
+            await createFile(_request, _response, parameters);
             break;
         }
       }
     }
     _response.end();
   }
-  
-  async function createFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
-    let repoPath: string | null = url.query["path"] ? <string>url.query["path"] : null;
-    let fileName: string | null = url.query["fileName"] ? <string>url.query["fileName"] : null;
+  function getParameters(_url: Url.UrlWithParsedQuery): Parameters {
 
-    if (!at || !repoName || !repoPath || !fileName)
+    let parameters: Parameters = {
+      action: _url.query["a"] ? <string>_url.query["a"] : null,
+      at: _url.query["at"] ? <string>_url.query["at"] : null,
+      repoName: _url.query["name"] ? <string>_url.query["name"] : null,
+      repoPath: _url.query["path"] ? <string>_url.query["path"] : null,
+      fileName: _url.query["fileName"] ? <string>_url.query["fileName"] : null,
+      path: _url.query["path"] ? <string>_url.query["path"] : null,
+      name: _url.query["owner"] ? <string>_url.query["owner"] : null,
+      sha: _url.query["sha"] ? <string>_url.query["sha"] : null,
+      state: _url.query["state"] ? <string>_url.query["state"] : null,
+      code: _url.query["code"] ? <string>_url.query["code"] : null
+    };
+
+    return parameters;
+  }
+
+  async function createFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
+
+    if (!_parameters.at || !_parameters.repoName || !_parameters.repoPath || !_parameters.fileName)
       return;
 
     const octokit = new Octokit({
-      auth: at
+      auth: _parameters.at
     });
 
     let name: string = (await octokit.users.getAuthenticated()).data.login;
 
     let res = await octokit.repos.createOrUpdateFile({
       owner: name,
-      repo: repoName,
-      path: repoPath + "/" + fileName,
+      repo: _parameters.repoName,
+      path: _parameters.repoPath + "/" + _parameters.fileName,
       message: "create file",
       content: ""
     });
@@ -99,34 +125,29 @@ export namespace GithubAPI {
     _response.write(res.status.toString());
   }
 
-  async function deleteFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+  async function deleteFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
-    let repoPath: string | null = url.query["path"] ? <string>url.query["path"] : null;
-
-    if (!at || !repoName || !repoPath)
+    if (!_parameters.at || !_parameters.repoName || !_parameters.repoPath)
       return;
 
     const octokit = new Octokit({
-      auth: at
+      auth: _parameters.at
     });
 
     let name: string = (await octokit.users.getAuthenticated()).data.login;
 
     const res = await octokit.repos.getContents({
       owner: name,
-      repo: repoName,
-      path: repoPath
+      repo: _parameters.repoName,
+      path: _parameters.repoPath
     });
 
-    console.log("DELETE /repos/" + name + "/" + repoPath);
+    console.log("DELETE /repos/" + name + "/" + _parameters.repoPath);
 
     let nres = await octokit.request("DELETE /repos/:owner/:repo/contents/:path", {
       owner: name,
-      repo: repoName,
-      path: repoPath,
+      repo: _parameters.repoName,
+      path: _parameters.repoPath,
       sha: res.data.sha,
       message: "delte"
     });
@@ -134,14 +155,9 @@ export namespace GithubAPI {
     _response.write(nres.status.toString());
   }
 
-  async function updateFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+  async function updateFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
-    let path: string | null = url.query["path"] ? <string>url.query["path"] : null;
-
-    if (!at || !repoName || !path)
+    if (!_parameters.at || !_parameters.repoName || !_parameters.path)
       return;
 
     let body: string = "";
@@ -150,35 +166,35 @@ export namespace GithubAPI {
     });
 
     const octokit = new Octokit({
-      auth: at
+      auth: _parameters.at
     });
 
     let name: string = (await octokit.users.getAuthenticated()).data.login;
 
     let ref = await octokit.git.getRef({
       owner: name,
-      repo: repoName,
+      repo: _parameters.repoName,
       ref: "heads/master"
     });
 
     let createBlob = await octokit.git.createBlob({
       owner: name,
-      repo: repoName,
+      repo: _parameters.repoName,
       content: body
     });
 
     let getTree = await octokit.git.getTree({
       owner: name,
-      repo: repoName,
+      repo: _parameters.repoName,
       tree_sha: ref.data.object.sha
     });
 
     let createTree = await octokit.git.createTree({
       owner: name,
-      repo: repoName,
+      repo: _parameters.repoName,
       tree: [
         {
-          path: path,
+          path: _parameters.path,
           mode: "100644",
           type: "blob",
           sha: createBlob.data.sha
@@ -189,7 +205,7 @@ export namespace GithubAPI {
 
     let commit = await octokit.git.createCommit({
       owner: name,
-      repo: repoName,
+      repo: _parameters.repoName,
       message: "Commit",
       tree: createTree.data.sha,
       parents: [getTree.data.sha]
@@ -197,44 +213,35 @@ export namespace GithubAPI {
 
     let res = await octokit.git.updateRef({
       owner: name,
-      repo: repoName,
+      repo: _parameters.repoName,
       ref: "heads/master",
       sha: commit.data.sha
     });
     _response.write(res.status.toString());
   }
-  
-  async function getFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
 
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
-    let path: string | null = url.query["path"] ? <string>url.query["path"] : null;
-    let name: string | null = url.query["owner"] ? <string>url.query["owner"] : null;
+  async function getFile(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    if (!at || !repoName || !path || !name)
+    if (!_parameters.at || !_parameters.repoName || !_parameters.path || !_parameters.name)
       return;
 
     const octokit = new Octokit({
-      auth: at
+      auth: _parameters.at
     });
 
     const res = await octokit.repos.getContents({
-      owner: name,
-      repo: repoName,
-      path: path
+      owner: _parameters.name.trim(),
+      repo: _parameters.repoName,
+      path: "/" + _parameters.path
     });
     _response.write(res.data.download_url);
   }
 
-  async function getRepoList(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
-
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-    if (at) {
+  async function getRepoList(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
+    if (_parameters.at) {
 
       const octokit = new Octokit({
-        auth: at
+        auth: _parameters.at
       });
       const result = await octokit.repos.listForAuthenticatedUser();
 
@@ -242,49 +249,38 @@ export namespace GithubAPI {
     }
   }
 
-  async function getTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+  async function getTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
-    let sha: string | null = url.query["sha"] ? <string>url.query["sha"] : null;
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-    let name: string | null = url.query["owner"] ? <string>url.query["owner"] : null;
-
-    if (sha && at && repoName && name) {
+    if (_parameters.sha && _parameters.at && _parameters.repoName && _parameters.name) {
       const octokit = new Octokit({
-        auth: at
+        auth: _parameters.at
       });
 
       let getTree = await octokit.git.getTree({
-        owner: name,
-        repo: repoName,
-        tree_sha: sha
+        owner: _parameters.name,
+        repo: _parameters.repoName,
+        tree_sha: _parameters.sha
       });
       _response.write(JSON.stringify(getTree.data.tree));
     }
   }
 
-  async function getRepoTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+  async function getRepoTree(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    let name: string | null = url.query["owner"] ? <string>url.query["owner"] : null;
-    let repoName: string | null = url.query["name"] ? <string>url.query["name"] : null;
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-
-    if (repoName && at && name) {
+    if (_parameters.repoName && _parameters.at && _parameters.name) {
       const octokit = new Octokit({
-        auth: at
+        auth: _parameters.at
       });
 
       let ref = await octokit.git.getRef({
-        owner: name,
-        repo: repoName,
+        owner: _parameters.name,
+        repo: _parameters.repoName,
         ref: "heads/master"
       });
 
       let getTree = await octokit.git.getTree({
-        owner: name,
-        repo: repoName,
+        owner: _parameters.name,
+        repo: _parameters.repoName,
         tree_sha: ref.data.object.sha
       });
 
@@ -292,24 +288,22 @@ export namespace GithubAPI {
     }
   }
 
-  async function auth(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _CLIENT_ID: string, _SCOPE: string): Promise<void> {
-    let urlRequest: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
-    let state: string = <string>urlRequest.query["state"];
+  async function auth(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _CLIENT_ID: string, _SCOPE: string, _parameters: Parameters): Promise<void> {
+
+    if (!_parameters.state)
+      return;
+
     let url: string = "https://github.com/login/oauth/authorize";
-    let params: URLSearchParams = new URLSearchParams("client_id=" + _CLIENT_ID + "&state=" + state + "&scope=" + _SCOPE);
+    let params: URLSearchParams = new URLSearchParams("client_id=" + _CLIENT_ID + "&state=" + _parameters.state + "&scope=" + _SCOPE);
     url += "?" + params.toString();
     _response.writeHead(302, {
       "Location": url
     });
   }
 
-  async function fetchToken(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+  async function fetchToken(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    let _code: string | null = url.query["code"] ? <string>url.query["code"] : null;
-    let _state: string | null = url.query["state"] ? <string>url.query["state"] : null;
-
-    if (_code && _state) {
+    if (_parameters.code && _parameters.state) {
 
       const auth = createOAuthAppAuth({
         clientId: CLIENT_ID,
@@ -317,8 +311,8 @@ export namespace GithubAPI {
       });
       const appAuthentication: {} = await auth({
         type: "token",
-        code: _code,
-        state: _state
+        code: _parameters.code,
+        state: _parameters.state
       });
 
       let result: string = JSON.stringify(appAuthentication);
@@ -331,18 +325,15 @@ export namespace GithubAPI {
     }
   }
 
-  async function fetchUsername(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse): Promise<void> {
-    let url: Url.UrlWithParsedQuery = Url.parse(<string>_request.url, true);
+  async function fetchUsername(_request: HTTP.IncomingMessage, _response: HTTP.ServerResponse, _parameters: Parameters): Promise<void> {
 
-    let at: string | null = url.query["at"] ? <string>url.query["at"] : null;
-
-    if (!at) {
+    if (!_parameters.at) {
       _response.write("Err:#10003: No token provided");
       return;
     }
 
     const octokit = new Octokit({
-      auth: at
+      auth: _parameters.at
     });
 
     let name: string = (await octokit.users.getAuthenticated()).data.login;
